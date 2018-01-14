@@ -1,2 +1,2 @@
 # arduino
-Programs related with Ardunio
+Practice Ardunio boards programming.
