@@ -73,7 +73,6 @@ int noteDurations[] = {
 
 int alarmButton = 12;
 boolean alarmSwitchStatus = false;
-boolean alarmIsPlaying = false;
 
 /*
  * Config for Water Tank Level
@@ -132,7 +131,6 @@ void loop() {
     alarmSwitchStatus = true;
   } else {
     alarmSwitchStatus = false;
-    alarmIsPlaying = false;
   }
     
   /*int usVal;
@@ -198,8 +196,7 @@ void oneSensorCycle() { // Do something with the results.
 
     display[i].showNumberDec(per[i]); //Display the numCounter value;
 
-    if(per[i] >= 90 && alarmSwitchStatus && !alarmIsPlaying) {
-      alarmIsPlaying = true;
+    if(i == 0 && per[i] >= 90 && alarmSwitchStatus) {
       playAlarm();
     }
   }
@@ -243,19 +240,21 @@ int waterLevelInPercent(int usVal, int i) {
 
 void playAlarm() {
   // iterate over the notes of the melody:
-  for (int thisNote = 0; thisNote < 8; thisNote++) {
-
-    // to calculate the note duration, take one second
-    // divided by the note type.
-    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-    int noteDuration = 1000 / noteDurations[thisNote];
-    NewTone(buzzerPin, melody[thisNote], noteDuration);
-
-    // to distinguish the notes, set a minimum time between them.
-    // the note's duration + 30% seems to work well:
-    int pauseBetweenNotes = noteDuration * 1.30;
-    delay(pauseBetweenNotes);
-    // stop the tone playing:
-    noNewTone(buzzerPin);
-  }  
+  //while(true) {
+    for (int thisNote = 0; thisNote < 8; thisNote++) {
+  
+      // to calculate the note duration, take one second
+      // divided by the note type.
+      //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+      int noteDuration = 1000 / noteDurations[thisNote];
+      NewTone(buzzerPin, melody[thisNote], noteDuration);
+  
+      // to distinguish the notes, set a minimum time between them.
+      // the note's duration + 30% seems to work well:
+      int pauseBetweenNotes = noteDuration * 1.30;
+      delay(pauseBetweenNotes);
+      // stop the tone playing:
+      noNewTone(buzzerPin);
+    }
+  //}    
 }
