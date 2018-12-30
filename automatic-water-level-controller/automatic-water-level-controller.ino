@@ -7,7 +7,9 @@
 // ---------------------------------------------------------------------------
 
 #include <NewPing.h> // Library for Ultra Sonic Sensor
+#include <NewTone.h>
 #include <TM1637Display.h> //Arduino library for TM1637 (LED Driver)
+#include "pitches.h"
 
 /*
  * Config for Ultrasonic sensor
@@ -53,7 +55,26 @@ TM1637Display display[SONAR_NUM] = {
  * LED to show the moter status
  */
 //const int LEDPin = 10;
- 
+
+/*
+ * Buzzer and melody configuration
+ */
+const int buzzerPin = 13; 
+
+// notes in the melody:
+int melody[] = {
+  NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
+};
+
+// note durations: 4 = quarter note, 8 = eighth note, etc.:
+int noteDurations[] = {
+  4, 8, 8, 4, 4, 4, 4, 4
+};
+
+int alarmButton = 12;
+boolean alarmSwitchStatus = false;
+boolean alarmIsPlaying = false;
+
 /*
  * Config for Water Tank Level
  */
@@ -80,6 +101,7 @@ Tank_Water_Level TWL[SONAR_NUM] = {
 void setup() {
   Serial.begin(115200); // Open serial monitor at 115200 baud to see ping results.
   //pinMode(LEDPin, OUTPUT); // LED Pin setup
+  pinMode(alarmButton, INPUT_PULLUP); // set the internal pull up resistor, unpressed button is HIGH 
   display[0].setBrightness(0x0a); //set the diplay to maximum brightness
   display[1].setBrightness(0x0a); //set the diplay to maximum brightness
 
@@ -103,7 +125,16 @@ void loop() {
       sonar[currentSensor].ping_timer(echoCheck);
     }
   }
-  
+
+  if ( digitalRead(alarmButton) == 0) {
+    // button was pressed
+    //do whatever the action is
+    alarmSwitchStatus = true;
+  } else {
+    alarmSwitchStatus = false;
+    alarmIsPlaying = false;
+  }
+    
   /*int usVal;
   int per;
 
@@ -166,7 +197,11 @@ void oneSensorCycle() { // Do something with the results.
     Serial.print("\n");
 
     display[i].showNumberDec(per[i]); //Display the numCounter value;
-    
+
+    if(per[i] >= 90 && alarmSwitchStatus && !alarmIsPlaying) {
+      alarmIsPlaying = true;
+      playAlarm();
+    }
   }
 
   
@@ -204,4 +239,23 @@ int waterLevelInPercent(int usVal, int i) {
   }
   
   return (int) percentage;
+}
+
+void playAlarm() {
+  // iterate over the notes of the melody:
+  for (int thisNote = 0; thisNote < 8; thisNote++) {
+
+    // to calculate the note duration, take one second
+    // divided by the note type.
+    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+    int noteDuration = 1000 / noteDurations[thisNote];
+    NewTone(buzzerPin, melody[thisNote], noteDuration);
+
+    // to distinguish the notes, set a minimum time between them.
+    // the note's duration + 30% seems to work well:
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    // stop the tone playing:
+    noNewTone(buzzerPin);
+  }  
 }
